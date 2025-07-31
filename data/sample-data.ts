@@ -27,6 +27,7 @@ export const sampleCotizaciones: Cotizacion[] = [
       phoneNumber: "+54 11 1234-5678",
     },
     comments: "Cliente preferencial, requiere entrega urgente",
+    contactado: true,
   },
   {
     tipo: "CUSTOM",
@@ -50,6 +51,7 @@ export const sampleCotizaciones: Cotizacion[] = [
       email: "maria.gonzalez@techsolutions.com",
     },
     comments: "Proyecto de desarrollo a largo plazo",
+    contactado: false,
   },
   {
     tipo: "CATALOGO",
@@ -72,6 +74,7 @@ export const sampleCotizaciones: Cotizacion[] = [
       phoneNumber: "+54 351 987-6543",
     },
     comments: "Requiere certificación ISO para el producto",
+    contactado: true,
   },
   {
     tipo: "CUSTOM",
@@ -94,6 +97,7 @@ export const sampleCotizaciones: Cotizacion[] = [
       email: "ana@startup.com",
       phoneNumber: "+54 11 5555-1234",
     },
+    contactado: false,
   },
   {
     tipo: "CATALOGO",
@@ -111,6 +115,7 @@ export const sampleCotizaciones: Cotizacion[] = [
       email: "roberto.silva@comercialnorte.com",
     },
     comments: "Cliente nuevo, primera cotización",
+    contactado: false,
   },
   {
     tipo: "CUSTOM",
@@ -140,5 +145,6 @@ export const sampleCotizaciones: Cotizacion[] = [
       phoneNumber: "+54 11 9999-8888",
     },
     comments: "Implementación por fases, requiere capacitación",
+    contactado: true,
   },
 ]
