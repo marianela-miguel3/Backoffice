@@ -1,14 +1,16 @@
 "use client"
 
 import { useState } from "react"
+import axios from "axios"
 import { Header } from "../components/header"
 import { FilterSection } from "../components/filter-section"
 import { CotizacionesTable } from "../components/cotizaciones-table"
-import { sampleCotizaciones } from "../data/sample-data"
-import type { Filters, Cotizacion } from "../types/cotizacion"
+import { ApiHealthStatus } from "@/components/ApiHealthStatus"
+import { useQuotes, type Quote } from "../hooks/use-quotes"
+import type { Filters } from "../types/cotizacion"
 
 export default function App() {
-  const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>(sampleCotizaciones)
+  const { quotes, isLoading, error, updateQuoteContacted } = useQuotes();
   const [filters, setFilters] = useState<Filters>({
     tipo: "TODOS",
     paymentMethod: "TODOS",
@@ -24,15 +26,15 @@ export default function App() {
     setFilters(newFilters)
   }
 
-  const handleContactadoChange = (index: number, contactado: boolean) => {
-    const updatedCotizaciones = [...cotizaciones]
-    updatedCotizaciones[index] = { ...updatedCotizaciones[index], contactado }
-    setCotizaciones(updatedCotizaciones)
+  const handleContactadoChange = (id: number, contactado: boolean) => {
+    updateQuoteContacted(id, contactado);
   }
 
 
-  const filteredCotizaciones: Cotizacion[] = cotizaciones.filter((cotizacion) => {
-    const tipoMatch = filters.tipo === "TODOS" || cotizacion.tipo === filters.tipo
+  const filteredQuotes: Quote[] = quotes.filter((quote) => {
+    const tipoMatch = filters.tipo === "TODOS" || 
+      (filters.tipo === "CATALOGO" && quote.type === "CATALOG") ||
+      (filters.tipo === "CUSTOM" && quote.type === "CUSTOM")
 
     // Lógica de filtro de forma de pago simplificada
     let paymentMatch = true
@@ -40,32 +42,46 @@ export default function App() {
       if (filters.paymentMethod === "LOCAL") {
         // LOCAL incluye: LOCAL_CASH, WIRE, LETTER_OFF_CREDIT
         paymentMatch =
-          cotizacion.paymentMethod === "LOCAL_CASH" ||
-          cotizacion.paymentMethod === "WIRE" ||
-          cotizacion.paymentMethod === "LETTER_OFF_CREDIT"
+          quote.paymentMethod === "LOCAL_CASH" ||
+          quote.paymentMethod === "WIRE" ||
+          quote.paymentMethod === "LETTER_OFF_CREDIT"
       } else if (filters.paymentMethod === "OFFSHORE") {
         // OFFSHORE incluye solo: OFFSHORE_CASH
-        paymentMatch = cotizacion.paymentMethod === "OFFSHORE_CASH"
+        paymentMatch = quote.paymentMethod === "OFFSHORE_CASH"
       }
     }
 
-    const productTypeMatch = filters.productType === "TODOS" || cotizacion.productType === filters.productType
+    // Para productType, mapeamos CATALOG/CUSTOM a LOCAL/OFFSHORE
+    let productTypeMatch = true;
+    if (filters.productType !== "TODOS") {
+      if (filters.productType === "LOCAL") {
+        productTypeMatch = quote.type === "CATALOG";
+      } else if (filters.productType === "OFFSHORE") {
+        productTypeMatch = quote.type === "CUSTOM";
+      }
+    }
     const contactadoMatch =
       filters.contactado === "TODOS" ||
-      (filters.contactado === "CONTACTADO" && cotizacion.contactado) ||
-      (filters.contactado === "NO_CONTACTADO" && !cotizacion.contactado)
+      (filters.contactado === "CONTACTADO" && quote.contactado) ||
+      (filters.contactado === "NO_CONTACTADO" && !quote.contactado)
 
     return tipoMatch && paymentMatch && productTypeMatch && contactadoMatch
   })
 
   const getActiveFiltersText = () => {
     const activeFilters = []
-    if (filters.tipo !== "TODOS") activeFilters.push(`Tipo: ${filters.tipo}`)
+    if (filters.tipo !== "TODOS") {
+      const tipoLabel = filters.tipo === "CATALOGO" ? "Catálogo" : "Custom"
+      activeFilters.push(`Tipo: ${tipoLabel}`)
+    }
     if (filters.paymentMethod !== "TODOS") {
       const paymentLabel = filters.paymentMethod === "LOCAL" ? "Local" : "Offshore"
       activeFilters.push(`Moneda: ${paymentLabel}`)
     }
-    if (filters.productType !== "TODOS") activeFilters.push(`Producto: ${filters.productType}`)
+    if (filters.productType !== "TODOS") {
+      const productLabel = filters.productType === "LOCAL" ? "Catálogo" : "Custom"
+      activeFilters.push(`Producto: ${productLabel}`)
+    }
     if (filters.contactado !== "TODOS") {
       const contactadoLabel = filters.contactado === "CONTACTADO" ? "Contactados" : "No contactados"
       activeFilters.push(`Estado: ${contactadoLabel}`)
@@ -74,14 +90,18 @@ export default function App() {
     return activeFilters.length > 0 ? ` (${activeFilters.join(", ")})` : ""
   }
 
-  const contactadosCount = cotizaciones.filter((c) => c.contactado).length
-  const noContactadosCount = cotizaciones.filter((c) => !c.contactado).length
+  const contactadosCount = quotes.filter((q) => q.contactado).length
+  const noContactadosCount = quotes.filter((q) => !q.contactado).length
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header onLogout={handleLogout} />
 
       <main className="container mx-auto px-6 py-8">
+        {/* Estado de la API */}
+        <div className="mb-6 flex justify-end">
+          <ApiHealthStatus />
+        </div>
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestión de Cotizaciones</h1>
           <p className="text-gray-600">Admin Yellow Bear S.A
@@ -95,18 +115,34 @@ export default function App() {
 
         <FilterSection filters={filters} onFiltersChange={handleFiltersChange} />
 
-        <div className="bg-white rounded-lg shadow">
+        {isLoading && (
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Cargando cotizaciones...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <p className="text-red-700 font-medium">Error al cargar las cotizaciones:</p>
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
+
+        {!isLoading && !error && (
+          <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-800">
               Cotizaciones
               <span className="ml-2 text-sm font-normal text-gray-500">
-                ({filteredCotizaciones.length} resultados{getActiveFiltersText()})
+                ({filteredQuotes.length} resultados{getActiveFiltersText()})
               </span>
             </h2>
           </div>
 
-          <CotizacionesTable cotizaciones={filteredCotizaciones} onContactadoChange={handleContactadoChange} />
+          <CotizacionesTable cotizaciones={filteredQuotes} onContactadoChange={handleContactadoChange} />
         </div>
+        )}
       </main>
     </div>
   )

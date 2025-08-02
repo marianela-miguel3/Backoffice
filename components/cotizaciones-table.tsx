@@ -2,14 +2,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { CheckCircle, XCircle, FileText, Mail, Phone } from 'lucide-react'
-import type { Cotizacion, PaymentMethod } from "../types/cotizacion"
+import type { Quote } from "../hooks/use-quotes"
 
 interface CotizacionesTableProps {
-  cotizaciones: Cotizacion[]
-  onContactadoChange: (index: number, contactado: boolean) => void
+  cotizaciones: Quote[]
+  onContactadoChange: (id: number, contactado: boolean) => void
 }
 
-const paymentMethodLabels: Record<PaymentMethod, string> = {
+const paymentMethodLabels: Record<string, string> = {
   LOCAL_CASH: "Efectivo",
   OFFSHORE_CASH: "Efectivo OFF",
   WIRE: "Transfer.",
@@ -17,41 +17,41 @@ const paymentMethodLabels: Record<PaymentMethod, string> = {
 }
 
 export function CotizacionesTable({ cotizaciones, onContactadoChange }: CotizacionesTableProps) {
-  const getContactInfo = (contactInfo: { email?: string; phoneNumber?: string }) => {
+  const getContactInfo = (email: string, phone: string) => {
     return (
       <div className="flex flex-col gap-1">
-        {contactInfo.email && (
+        {email && (
           <div className="flex items-center gap-1 text-xs">
             <Mail className="h-3 w-3 text-gray-400" />
-            <span className="truncate max-w-[120px]" title={contactInfo.email}>
-              {contactInfo.email}
+            <span className="truncate max-w-[120px]" title={email}>
+              {email}
             </span>
           </div>
         )}
-        {contactInfo.phoneNumber && (
+        {phone && (
           <div className="flex items-center gap-1 text-xs">
             <Phone className="h-3 w-3 text-gray-400" />
-            <span>{contactInfo.phoneNumber}</span>
+            <span>{phone}</span>
           </div>
         )}
-        {!contactInfo.email && !contactInfo.phoneNumber && "-"}
+        {!email && !phone && "-"}
       </div>
     )
   }
 
-  const getProductName = (cotizacion: Cotizacion) => {
-    if (cotizacion.tipo === "CATALOGO") {
-      return cotizacion.productName || "-"
+  const getProductName = (quote: Quote) => {
+    if (quote.type === "CATALOG") {
+      return `Producto ID: ${quote.productInCatalogId}` || "-"
     } else {
-      return cotizacion.productDetails.name || "-"
+      return quote.customProductName || "-"
     }
   }
 
-  const getProductDescription = (cotizacion: Cotizacion) => {
-    if (cotizacion.tipo === "CATALOGO") {
-      return cotizacion.productDescription || "-"
+  const getProductDescription = (quote: Quote) => {
+    if (quote.type === "CATALOG") {
+      return "Producto del catálogo"
     } else {
-      return cotizacion.productDetails.description || "-"
+      return quote.customProductDescription || "-"
     }
   }
 
@@ -84,89 +84,87 @@ export function CotizacionesTable({ cotizaciones, onContactadoChange }: Cotizaci
               </TableCell>
             </TableRow>
           ) : (
-            cotizaciones.map((cotizacion, index) => (
-              <TableRow key={index} className="text-xs">
+            cotizaciones.map((quote) => (
+              <TableRow key={quote.id} className="text-xs">
                 <TableCell className="p-2 text-center">
                   <Checkbox
-                    checked={cotizacion.contactado}
-                    onCheckedChange={(checked) => onContactadoChange(index, checked as boolean)}
+                    checked={quote.contactado || false}
+                    onCheckedChange={(checked) => onContactadoChange(quote.id, checked as boolean)}
                   />
                 </TableCell>
                 <TableCell className="p-2">
                   <Badge 
-                    variant={cotizacion.tipo === "CATALOGO" ? "default" : "secondary"}
+                    variant={quote.type === "CATALOG" ? "default" : "secondary"}
                     className="text-xs px-1 py-0"
                   >
-                    {cotizacion.tipo === "CATALOGO" ? "CAT" : "CUS"}
+                    {quote.type === "CATALOG" ? "CAT" : "CUS"}
                   </Badge>
                 </TableCell>
                 <TableCell className="p-2">
-                  <div className="font-medium text-xs truncate" title={getProductName(cotizacion)}>
-                    {getProductName(cotizacion)}
+                  <div className="font-medium text-xs truncate" title={getProductName(quote)}>
+                    {getProductName(quote)}
                   </div>
-                  {cotizacion.tipo === "CUSTOM" && cotizacion.productDetails.serialNumber && (
+                  {quote.type === "CUSTOM" && quote.customProductSerialNumber && (
                     <div className="text-xs text-gray-500 mt-1 truncate">
-                      {cotizacion.productDetails.serialNumber}
+                      {quote.customProductSerialNumber}
                     </div>
                   )}
                 </TableCell>
                 <TableCell className="p-2">
-                  <div className="text-xs truncate" title={getProductDescription(cotizacion)}>
-                    {getProductDescription(cotizacion)}
+                  <div className="text-xs truncate" title={getProductDescription(quote)}>
+                    {getProductDescription(quote)}
                   </div>
                 </TableCell>
                 <TableCell className="p-2 text-center">
-                  <div className="font-medium text-xs">{cotizacion.quantity.toLocaleString()}</div>
+                  <div className="font-medium text-xs">1</div>
                 </TableCell>
                 <TableCell className="p-2">
-                  <div className="truncate text-xs" title={cotizacion.fullName || "-"}>
-                    {cotizacion.fullName || "-"}
+                  <div className="truncate text-xs" title={quote.fullName || "-"}>
+                    {quote.fullName || "-"}
                   </div>
                 </TableCell>
                 <TableCell className="p-2">
-                  <div className="truncate text-xs" title={cotizacion.companyName || "-"}>
-                    {cotizacion.companyName || "-"}
+                  <div className="truncate text-xs" title={quote.companyName || "-"}>
+                    {quote.companyName || "-"}
                   </div>
                 </TableCell>
                 <TableCell className="p-2">
-                  <div className="text-xs">{cotizacion.cuilCuit || "-"}</div>
+                  <div className="text-xs">{quote.cuilCuit || "-"}</div>
                 </TableCell>
                 <TableCell className="p-2">
                   <div className="text-xs">
-                    <div className="truncate" title={cotizacion.address?.address || "-"}>
-                      {cotizacion.address?.address || "-"}
+                    <div className="truncate" title={quote.address || "-"}>
+                      {quote.address || "-"}
                     </div>
-                    {cotizacion.address?.coordinates && (
-                      <div className="text-xs text-gray-400 mt-1">
-                        {cotizacion.address.coordinates.lat.toFixed(2)}, {cotizacion.address.coordinates.lng.toFixed(2)}
-                      </div>
-                    )}
+                    <div className="text-xs text-gray-400 mt-1">
+                      {quote.addressLat?.toFixed(2)}, {quote.addressLong?.toFixed(2)}
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell className="p-2">
                   <div className="text-xs">
-                    {cotizacion.paymentMethod ? paymentMethodLabels[cotizacion.paymentMethod] : "-"}
+                    {quote.paymentMethod ? paymentMethodLabels[quote.paymentMethod] : "-"}
                   </div>
                 </TableCell>
                 <TableCell className="p-2">
                   <Badge 
-                    variant={cotizacion.productType === "LOCAL" ? "outline" : "destructive"}
+                    variant={quote.paymentMethod === "LOCAL_CASH" || quote.paymentMethod === "WIRE" || quote.paymentMethod === "LETTER_OFF_CREDIT" ? "outline" : "destructive"}
                     className="text-xs px-1 py-0"
                   >
-                    {cotizacion.productType === "LOCAL" ? "LOC" : "OFF"}
+                    {quote.paymentMethod === "LOCAL_CASH" || quote.paymentMethod === "WIRE" || quote.paymentMethod === "LETTER_OFF_CREDIT" ? "LOC" : "OFF"}
                   </Badge>
                 </TableCell>
                 <TableCell className="p-2">
                   <div className="flex items-center gap-1">
-                    {cotizacion.hasReferencePrice ? (
+                    {quote.hasReferencePrice ? (
                       <CheckCircle className="h-3 w-3 text-green-500" />
                     ) : (
                       <XCircle className="h-3 w-3 text-red-500" />
                     )}
                   </div>
-                  {cotizacion.hasReferencePrice && cotizacion.referencePriceFileURL && (
+                  {quote.hasReferencePrice && quote.referencePriceFileURL && (
                     <a
-                      href={cotizacion.referencePriceFileURL}
+                      href={quote.referencePriceFileURL}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 mt-1"
@@ -176,11 +174,11 @@ export function CotizacionesTable({ cotizaciones, onContactadoChange }: Cotizaci
                   )}
                 </TableCell>
                 <TableCell className="p-2">
-                  {getContactInfo(cotizacion.contactInfo)}
+                  {getContactInfo(quote.contactEmail, quote.contactPhone)}
                 </TableCell>
                 <TableCell className="p-2">
-                  <div className="text-xs truncate" title={cotizacion.tipo === "CATALOGO" ? cotizacion.comments : cotizacion.comments || "-"}>
-                    {cotizacion.tipo === "CATALOGO" ? cotizacion.comments : cotizacion.comments || "-"}
+                  <div className="text-xs truncate" title={quote.comments || "-"}>
+                    {quote.comments || "-"}
                   </div>
                 </TableCell>
               </TableRow>

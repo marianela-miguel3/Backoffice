@@ -1,254 +1,291 @@
-# 📊 Backoffice de Cotizaciones
+# 📊 Backoffice de Cotizaciones - Yellow Bear S.A
 
-Sistema de gestión de cotizaciones desarrollado en React con TypeScript y Tailwind CSS. Permite administrar cotizaciones de catálogo y personalizadas con funcionalidades de filtrado avanzado y seguimiento de contactos.
+Sistema de gestión de cotizaciones con integración completa al backend API.
 
-## ✨ Características
+## 🚀 Características
 
-- 🏷️ **Gestión de Cotizaciones**: Manejo de cotizaciones CATALOGO y CUSTOM
-- 🔍 **Filtros Avanzados**: Filtrado por tipo, moneda, producto y estado de contacto
-- ✅ **Seguimiento de Leads**: Sistema de checkbox para marcar cotizaciones contactadas
-- 📱 **Diseño Responsive**: Interfaz optimizada para diferentes tamaños de pantalla
-- 🎨 **UI Moderna**: Diseño limpio con Tailwind CSS y componentes shadcn/ui
-- 📍 **Geolocalización**: Soporte para coordenadas GPS en direcciones
-- 📄 **Información Completa**: Datos detallados de productos, clientes y contacto
+- ✅ **Integración con API Backend**: Conexión real con `yellow-bear-store-api.onrender.com`
+- ✅ **Gestión de Cotizaciones**: Visualización y gestión de quotes reales
+- ✅ **Filtros Avanzados**: Por tipo, método de pago, producto y estado de contacto
+- ✅ **Estado de API**: Monitoreo en tiempo real del estado del backend
+- ✅ **Interfaz Moderna**: Diseño responsive con shadcn/ui
+- ✅ **Manejo de Errores**: Gestión robusta de errores de conexión
 
-## 🛠️ Tecnologías Utilizadas
+## 🏗️ Arquitectura
 
-- **React 18** - Biblioteca de interfaz de usuario
-- **TypeScript** - Tipado estático para JavaScript
-- **Next.js 14** - Framework de React con App Router
-- **Tailwind CSS** - Framework de CSS utilitario
-- **shadcn/ui** - Componentes de UI reutilizables
-- **Lucide React** - Iconografía moderna
+### Frontend
+- **Next.js 15.2.4** con App Router
+- **React 18** con TypeScript
+- **Tailwind CSS** para estilos
+- **shadcn/ui** para componentes
 
-## 📋 Prerrequisitos
+### Backend Integration
+- **API Routes** como proxy para evitar CORS
+- **Axios** para llamadas HTTP
+- **Fetch API** para llamadas directas
+- **Hooks personalizados** para gestión de estado
 
-Antes de comenzar, asegúrate de tener instalado:
+## 🔌 Integración con Backend
 
-- **Node.js** (versión 18.0 o superior)
-- **npm** (versión 8.0 o superior) o **yarn** (versión 1.22 o superior)
+### Endpoints Integrados
 
-## 🚀 Instalación
+#### Health Check
+```typescript
+GET /api/health
+// Verifica el estado del backend
+// URL: https://yellow-bear-store-api.onrender.com/api/health
+```
 
-### 1. Clonar el repositorio
+#### Quotes Management
+```typescript
+GET /api/quotes
+// Obtiene todas las cotizaciones
+// URL: https://yellow-bear-store-api.onrender.com/api/quotes
 
-\`\`\`bash
-git clone https://github.com/tu-usuario/backoffice-cotizaciones.git
-cd backoffice-cotizaciones
-\`\`\`
+POST /api/quotes
+// Crea una nueva cotización
+// URL: https://yellow-bear-store-api.onrender.com/api/quotes
+```
 
-### 2. Instalar dependencias
+### Estructura de Datos
 
-\`\`\`bash
-npm install
-
-# o
-
-yarn install
-\`\`\`
-
-### 3. Ejecutar en modo desarrollo
-
-\`\`\`bash
-npm run dev
-
-# o
-
-yarn dev
-\`\`\`
-
-### 4. Abrir en el navegador
-
-Visita [http://localhost:3000](http://localhost:3000) para ver la aplicación.
+#### Quote (Cotización)
+```typescript
+interface Quote {
+  id: number;
+  type: 'CATALOG' | 'CUSTOM';
+  fullName: string;
+  companyName: string;
+  cuilCuit: string;
+  address: string;
+  addressLat: number;
+  addressLong: number;
+  hasReferencePrice: boolean;
+  referencePriceDescription?: string;
+  referencePriceFileURL?: string;
+  paymentMethod: 'WIRE' | 'LOCAL_CASH' | 'OFFSHORE_CASH' | 'LETTER_OFF_CREDIT';
+  contactEmail: string;
+  contactPhone: string;
+  comments?: string;
+  createdAt: string;
+  updatedAt: string;
+  customProductName?: string;
+  customProductDescription?: string;
+  customProductUrl?: string;
+  customProductSerialNumber?: string;
+  productInCatalogId?: number;
+  contactado?: boolean; // Estado local
+}
+```
 
 ## 📁 Estructura del Proyecto
 
-\`\`\`
-backoffice-cotizaciones/
-├── app/ # Páginas de Next.js (App Router)
-│ ├── globals.css # Estilos globales
-│ ├── layout.tsx # Layout principal
-│ └── page.tsx # Página principal
-├── components/ # Componentes React
-│ ├── ui/ # Componentes de shadcn/ui
-│ ├── header.tsx # Header con logo y logout
-│ ├── filter-section.tsx # Sección de filtros
-│ └── cotizaciones-table.tsx # Tabla de cotizaciones
-├── data/ # Datos de ejemplo
-│ └── sample-data.ts # Cotizaciones de muestra
-├── types/ # Definiciones de TypeScript
-│ └── cotizacion.ts # Interfaces y tipos
-├── public/ # Archivos estáticos
-├── .gitignore # Archivos ignorados por Git
-├── README.md # Documentación del proyecto
-├── package.json # Dependencias y scripts
-└── tailwind.config.ts # Configuración de Tailwind
-\`\`\`
+```
+├── app/
+│   ├── api/
+│   │   ├── health/route.ts          # API route para health check
+│   │   └── quotes/route.ts          # API route para quotes
+│   ├── page.tsx                     # Página principal
+│   └── layout.tsx                   # Layout principal
+├── components/
+│   ├── ui/                          # Componentes shadcn/ui
+│   ├── ApiHealthStatus.tsx          # Componente de estado de API
+│   ├── cotizaciones-table.tsx       # Tabla de cotizaciones
+│   ├── filter-section.tsx           # Sección de filtros
+│   └── header.tsx                   # Header de la aplicación
+├── hooks/
+│   ├── use-quotes.ts                # Hook para gestión de quotes
+│   └── use-toast.ts                 # Hook para notificaciones
+├── lib/
+│   ├── api.ts                       # Configuración de axios
+│   └── utils.ts                     # Utilidades
+├── types/
+│   └── cotizacion.ts                # Tipos TypeScript
+└── docs/
+    └── api-integration.md           # Documentación de integración
+```
 
-## 🎯 Uso de la Aplicación
+## 🛠️ Configuración
 
-### Dashboard Principal
+### Instalación
 
-Al acceder a la aplicación, verás:
+```bash
+# Clonar el repositorio
+git clone [url-del-repositorio]
 
-1. **Header**: Logo de la aplicación y botón de cerrar sesión
-2. **Estadísticas**: Contador de cotizaciones contactadas vs pendientes
-3. **Filtros**: Panel con 4 filtros diferentes
-4. **Tabla**: Lista completa de cotizaciones con todas las columnas
+# Instalar dependencias
+npm install
+# o
+pnpm install
 
-### Filtros Disponibles
+# Iniciar servidor de desarrollo
+npm run dev
+# o
+pnpm dev
+```
 
-#### 1. **Tipo de Cotización**
+### Variables de Entorno
 
-- **Todos**: Muestra todas las cotizaciones
-- **Catálogo**: Solo cotizaciones de productos del catálogo
-- **Custom**: Solo cotizaciones de productos personalizados
+```env
+# Backend API URL
+NEXT_PUBLIC_API_URL=https://yellow-bear-store-api.onrender.com/api
+```
 
-#### 2. **Moneda**
+## 🎯 Funcionalidades Principales
 
-- **Todos**: Todas las formas de pago
-- **Local**: Efectivo local, transferencias y cartas de crédito
-- **Offshore**: Solo efectivo offshore
+### 1. Monitoreo de Estado de API
+- **Componente**: `ApiHealthStatus`
+- **Funcionalidad**: Verificación en tiempo real del estado del backend
+- **Indicadores**: Conectado/Desconectado con detalles del servidor
 
-#### 3. **Tipo de Producto**
+### 2. Gestión de Cotizaciones
+- **Hook**: `useQuotes`
+- **Funcionalidad**: Carga y gestión de quotes desde la API
+- **Características**:
+  - Carga automática al iniciar
+  - Manejo de errores
+  - Estado de contacto local
+  - Filtrado y búsqueda
 
-- **Todos**: Todos los tipos
-- **Local**: Productos locales
-- **Offshore**: Productos offshore
+### 3. Filtros Avanzados
+- **Tipo**: CATALOG/CUSTOM
+- **Método de Pago**: LOCAL/OFFSHORE
+- **Producto**: Catálogo/Custom
+- **Estado de Contacto**: Contactado/No contactado
 
-#### 4. **Estado de Contacto**
+### 4. Tabla de Cotizaciones
+- **Componente**: `CotizacionesTable`
+- **Funcionalidades**:
+  - Visualización de datos completos
+  - Marcado de contacto
+  - Enlaces a archivos de referencia
+  - Información de contacto
 
-- **Todos**: Todas las cotizaciones
-- **Contactados**: Solo cotizaciones ya contactadas
-- **No contactados**: Solo cotizaciones pendientes
+## 🔧 API Routes
 
-### Gestión de Contactos
+### `/api/health`
+```typescript
+GET /api/health
+// Proxy para verificar estado del backend
+// Evita problemas de CORS
+```
 
-- **Marcar como contactado**: Haz clic en el checkbox de la primera columna
-- **Filtrar por estado**: Usa el filtro "Estado de contacto"
-- **Ver estadísticas**: Los contadores se actualizan automáticamente
+### `/api/quotes`
+```typescript
+GET /api/quotes
+// Obtiene todas las cotizaciones
 
-### Información de la Tabla
+POST /api/quotes
+// Crea una nueva cotización
+// Body: Quote object
+```
 
-La tabla muestra las siguientes columnas:
+## 🎨 Componentes UI
 
-| Columna     | Descripción                                                |
-| ----------- | ---------------------------------------------------------- |
-| Contactado  | Checkbox para marcar si se contactó al cliente             |
-| Tipo        | CAT (Catálogo) o CUS (Custom)                              |
-| Producto    | Nombre del producto o servicio                             |
-| Descripción | Descripción detallada del producto                         |
-| Cant.       | Cantidad solicitada                                        |
-| Cliente     | Nombre completo del cliente                                |
-| Empresa     | Nombre de la empresa                                       |
-| CUIT        | Número de CUIT/CUIL                                        |
-| Dirección   | Dirección y coordenadas GPS (si están disponibles)         |
-| Pago        | Forma de pago abreviada                                    |
-| Prod.       | LOC (Local) u OFF (Offshore)                               |
-| P.Ref.      | Indica si tiene precio de referencia con enlace al archivo |
-| Contacto    | Email y/o teléfono con iconos                              |
-| Comentarios | Observaciones adicionales                                  |
+### ApiHealthStatus
+- Muestra estado de conexión con el backend
+- Indicadores visuales (verde/rojo)
+- Información detallada del servidor
+- Botón de verificación manual
 
-## 🔧 Scripts Disponibles
+### CotizacionesTable
+- Tabla responsive con datos de quotes
+- Filtros integrados
+- Acciones de contacto
+- Enlaces a archivos
 
-\`\`\`bash
-
-# Desarrollo
-
-npm run dev # Inicia servidor de desarrollo
-npm run build # Construye la aplicación para producción
-npm run start # Inicia servidor de producción
-npm run lint # Ejecuta ESLint para revisar código
-
-# Yarn equivalentes
-
-yarn dev
-yarn build
-yarn start
-yarn lint
-\`\`\`
-
-## 📊 Datos de Ejemplo
-
-La aplicación incluye 6 cotizaciones de ejemplo que demuestran:
-
-- ✅ **3 Cotizaciones contactadas**: Juan Pérez, Carlos Rodriguez, Laura Fernández
-- ⏳ **3 Cotizaciones pendientes**: María González, Ana Martínez, Roberto Silva
-- 🏷️ **Mix de tipos**: 3 CATALOGO y 3 CUSTOM
-- 💰 **Diferentes formas de pago**: Local y offshore
-- 📍 **Coordenadas GPS**: Algunas incluyen geolocalización
-
-## 🎨 Personalización
-
-### Colores y Tema
-
-Los colores principales se pueden modificar en `tailwind.config.ts`:
-
-\`\`\`typescript
-theme: {
-extend: {
-colors: {
-// Personaliza los colores aquí
-}
-}
-}
-\`\`\`
-
-### Componentes UI
-
-Los componentes de shadcn/ui se pueden personalizar en la carpeta `components/ui/`.
+### FilterSection
+- Filtros múltiples
+- Estado persistente
+- Interfaz intuitiva
 
 ## 🚀 Despliegue
 
-### Vercel (Recomendado)
+### Desarrollo Local
+```bash
+npm run dev
+# Servidor en http://localhost:3000 (o 3001 si está ocupado)
+```
 
-1. Conecta tu repositorio a [Vercel](https://vercel.com)
-2. Vercel detectará automáticamente que es un proyecto Next.js
-3. El despliegue se realizará automáticamente
-
-### Otros Proveedores
-
-\`\`\`bash
-
-# Construir para producción
-
+### Producción
+```bash
 npm run build
+npm start
+```
 
-# Los archivos estáticos estarán en la carpeta .next/
+## 📊 Datos de Ejemplo
 
-\`\`\`
+El sistema actualmente muestra 2 cotizaciones reales:
+
+1. **John Doe** (Acme Corp)
+   - Tipo: CATALOG
+   - Método de Pago: WIRE
+   - Producto del catálogo
+
+2. **Jane Smith** (Tech Solutions)
+   - Tipo: CUSTOM
+   - Método de Pago: WIRE
+   - Producto personalizado
+
+## 🔍 Troubleshooting
+
+### Puerto 3000 Ocupado
+```bash
+# Verificar qué usa el puerto
+netstat -ano | findstr :3000
+
+# Terminar proceso
+taskkill /PID [número] /F
+
+# O usar puerto alternativo
+npm run dev -- -p 3001
+```
+
+### Errores de CORS
+- Las API routes actúan como proxy
+- No hay problemas de CORS en desarrollo
+- Configuración automática en producción
+
+### Errores de Conexión
+- Verificar estado de la API con el componente `ApiHealthStatus`
+- Revisar logs en la consola del navegador
+- Verificar conectividad de red
+
+## 📝 Changelog
+
+### v2.0.0 - Integración Backend
+- ✅ Integración completa con API backend
+- ✅ API routes para evitar CORS
+- ✅ Hook personalizado para quotes
+- ✅ Componente de estado de API
+- ✅ Datos reales de cotizaciones
+- ✅ Manejo robusto de errores
+
+### v1.0.0 - Versión Inicial
+- ✅ Interfaz básica de gestión
+- ✅ Datos de ejemplo
+- ✅ Filtros básicos
+- ✅ Componentes UI
 
 ## 🤝 Contribución
 
 1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit tus cambios (`git commit -m 'Agregar nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
 5. Abre un Pull Request
-
-## 📝 Próximas Funcionalidades
-
-- [ ] Paginación para grandes volúmenes de datos
-- [ ] Búsqueda global en todas las columnas
-- [ ] Exportación a Excel/CSV
-- [ ] Sistema de notificaciones
-- [ ] Integración con API real
-- [ ] Autenticación de usuarios
-- [ ] Dashboard con gráficos y estadísticas
-- [ ] Historial de cambios en cotizaciones
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE.md](LICENSE.md) para detalles.
 
 ## 📞 Soporte
 
-Si tienes preguntas o necesitas ayuda:
-
-- 📧 Email: soporte@cotizaapp.com
-- 💬 Issues: [GitHub Issues](https://github.com/tu-usuario/backoffice-cotizaciones/issues)
-- 📖 Documentación: [Wiki del proyecto](https://github.com/tu-usuario/backoffice-cotizaciones/wiki)
+Para soporte técnico o preguntas sobre la integración:
+- Revisar la documentación en `/docs/api-integration.md`
+- Verificar el estado de la API en la aplicación
+- Revisar logs en la consola del navegador
 
 ---
 
-⭐ **¡No olvides dar una estrella al proyecto si te resultó útil!**
+**Desarrollado para Yellow Bear S.A** 🐻
